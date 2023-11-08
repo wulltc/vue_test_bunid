@@ -8,7 +8,7 @@
     <section class="w-full p-6 font-mono">
       <div class="w-full mb-8 overflow-hidden rounded-lg shadow-lg">
         <div class="w-full overflow-x-auto">
-          <table class="w-full" v-if="items.length > 0">
+          <table class="w-full" v-if="totalItems > 0">
 
             <!--Debut de Entete de notre tableau -->
             <thead>
@@ -32,7 +32,7 @@
                       <img v-if="item?.volumeInfo?.imageLinks?.thumbnail" class="object-cover w-full h-full"
                         v-bind:src="item.volumeInfo.imageLinks.thumbnail" alt="" />
                       <span v-else class="text-red-300 font-bold text-center flex">
-                        No image
+                        Pas d'image
                       </span>
                     </div>
                   </div>
@@ -42,15 +42,17 @@
                   <span v-if="item?.volumeInfo?.authors"
                     class="px-2 py-1 font-semibold leading-tight text-green-700 bg-green-100 rounded-sm">
                     {{ item.volumeInfo.authors.join(" & ") }} </span>
-                  <span v-else class="px-2 py-1 font-semibold leading-tight text-red-700 bg-red-100 rounded-sm">
-                    No author </span>
+                  <span v-else
+                    class="px-2 py-1 font-semibold leading-tight text-red-700 bg-red-100 rounded-sm whitespace-nowrap">
+                    Pas d'auteur </span>
                 </td>
                 <td v-if="item?.saleInfo?.listPrice?.amount" class="px-4 py-3 text-sm border">{{
                   item.saleInfo.listPrice.amount
                 }}
                 </td>
 
-                <td v-else class="px-4 py-3 text-sm border text-red-300 font-bold text-center flex">No prix
+                <td v-else class="px-4 py-3 text-sm border text-red-300 font-bold text-center flex whitespace-nowrap">Pas
+                  de prix
                 </td>
                 <td class="px-4 py-3 text-sm border">
                   <a v-bind:href="item?.saleInfo?.buyLink" target="_blank"
@@ -61,12 +63,10 @@
                       xml:space="preserve" fill="white">
                       <path class="sharpcorners_een"
                         d="M10,27h4c0,1.105-0.895,2-2,2S10,28.105,10,27z M23,29c1.105,0,2-0.895,2-2h-4
-                                      	C21,28.105,21.895,29,23,29z M30,9H6.819l-1-5H2v2h2.181l4,20H26v-2H9.819l-0.6-3H26L30,9z" />
+                                                  	C21,28.105,21.895,29,23,29z M30,9H6.819l-1-5H2v2h2.181l4,20H26v-2H9.819l-0.6-3H26L30,9z" />
                     </svg>
-                    <span class="ml-2 uppercase">{{
-                      item.saleInfo.saleability === "FOR_SALE" ? "Acheter"
-                      :
-                      "épuisé"
+                    <span class="ml-2 uppercase whitespace-nowrap">{{
+                      saleability.includes(item?.saleInfo?.saleability) ? "Acheter" : "Non Vendu"
                     }}</span>
                   </a>
                 </td>
@@ -74,7 +74,10 @@
             </tbody>
             <!-- Fin du corps de notre tableau -->
           </table>
-          <div class="flex flex-col lg:flex-row justify-between" v-if="items.length > 0">
+          <div v-if="text && totalItems === 0" class="text-center p-5">
+            Aucun resultats
+          </div>
+          <div class="flex flex-col lg:flex-row justify-between" v-if="totalItems > 0">
             <div class="flex flex-col lg:flex-row items-center space-x-2 text-xs">
               <select name="lignsel" v-bind:value="pageSize"
                 class="py-2 px-4 bg-white text-gray-600 font-medium rounded hover:bg-gray-100 active:bg-gray-200 disabled:opacity-50 inline-flex items-center">
@@ -130,6 +133,7 @@ export default {
     return {
       text: "",
       items: [],
+      saleability: ["FOR_SALE", "FOR_RENTAL_ONLY", "FOR_SALE_AND_RENTAL", "FREE", "FOR_PREORDER"],
       totalItems: 0,
       pageSize: 10,
       currentPage: 1,
@@ -151,6 +155,7 @@ export default {
     search(text) {
       this.text = text;
       this.startIndex = 0;
+      this.currentPage = this.startIndex ? (this.startIndex / 10) + 1 : 1
       this.getBooks()
     },
     async getBooks() {
@@ -159,14 +164,14 @@ export default {
       this.items = Books.items
       this.totalItems = Books.totalItems;
     },
-    nextPage: function () {
+    nextPage() {
       if ((this.currentPage * this.pageSize) < this.totalItems) {
         this.currentPage++;
         this.startIndex = (this.currentPage - 1) * 10
         this.getBooks();
       }
     },
-    prevPage: function () {
+    prevPage() {
       if (this.currentPage > 1) {
         this.currentPage--;
         this.startIndex -= 10;
