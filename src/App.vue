@@ -1,12 +1,7 @@
 <template>
  <div>
-    <RechercheLivre/>
+  <router-view></router-view>
  </div>
 </template>
-
-
-<script setup>
-import RechercheLivre from "./components/rechercheLivre.vue"
-</script>
 
 
